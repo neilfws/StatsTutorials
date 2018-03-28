@@ -1,0 +1,143 @@
+---
+title: "Years as coloured bars: better alternatives using ggplot2"
+author: "Neil Saunders"
+date: 'compiled `r Sys.time()`'
+output: 
+  github_document: 
+    toc: true
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE)
+library(dplyr)
+library(ggplot2)
+
+theme_set(theme_light())
+
+set.seed(1001)
+example_data2 <- data.frame(
+  category = rep(paste0("Category", 1:6), each = 6),
+  year = rep(2000:2005, by = 6),
+  n = sample(1:30, 36, replace = TRUE)
+)
+```
+
+# Introduction
+I often see charts with "years as coloured bars". What's better than years as coloured bars?
+
+# Dataset
+We generate some fake categories over time.
+
+## Bars coloured by year
+This is what we don't want: years as coloured bars within categories.
+
+```{r bars-year}
+example_data2 %>%
+  ggplot(aes(category, n)) + 
+  geom_col(aes(fill = factor(year)), position = "dodge") + 
+  scale_fill_brewer(palette = "RdYlBu", name = "year")
+```
+
+Bars in one colour with no legend? No (not shown).
+
+```{r bars-year-mono, eval=FALSE}
+example_data2 %>%
+  ggplot(aes(category, n)) + 
+  geom_col(aes(fill = factor(year)), position = "dodge") + 
+  scale_fill_manual(values = rep("#91BFDB", 6)) +
+  guides(fill = FALSE)
+```
+
+## Bars coloured by category
+Switching categories for years makes it difficult to follow individual categories over time.
+
+```{r bars-category}
+example_data2 %>% 
+  ggplot(aes(year, n)) + 
+  geom_col(aes(fill = factor(category)), position = "dodge") + 
+  scale_fill_brewer(palette = "RdYlBu", name = "category")
+```
+
+## Bars coloured by category, stacked
+Stacking makes it difficult to follow categories when a value changes abruptly.
+
+```{r bars-category-stacked}
+example_data2 %>%
+  ggplot(aes(year, n)) + 
+  geom_col(aes(fill = factor(category)), position = "stack") + 
+  scale_fill_brewer(palette = "RdYlBu", name = "category")
+```
+
+## Bars coloured by category, stacked and filled
+Stacking and filling creates confusion when values change for any category other than the bottom row.
+
+```{r bars-category-filled}
+example_data2 %>% 
+  ggplot(aes(year, n)) + 
+  geom_col(aes(fill = factor(category)), position = "fill") + 
+  scale_fill_brewer(palette = "RdYlBu", name = "category")
+```
+
+## Area coloured by category, stacked and filled
+Area plots help somewhat, but make it difficult to follow changes in absolute value per category.
+
+```{r area-category-filled}
+example_data2 %>% 
+  ggplot(aes(year, n)) + 
+  geom_area(aes(fill = factor(category)), position = "fill") + 
+  scale_fill_brewer(palette = "RdYlBu", name = "category")
+```
+
+## Lines coloured by category
+Overlapping lines are messy.
+
+```{r lines-category}
+example_data2 %>% 
+  ggplot(aes(year, n)) + 
+  geom_line(aes(color = factor(category))) + 
+  scale_color_brewer(palette = "RdYlBu", name = "category")
+```
+
+## Facets
+### Facet grid by category, bars
+Facet by category is better but bars are disjointed.
+
+```{r bars-category-facet}
+example_data2 %>% 
+  ggplot(aes(year, n)) + 
+  geom_col(fill = "#91BFDB") + 
+  facet_grid(category ~ .)
+```
+
+### Facet grid by category, lines
+Lines are better but there is still some visual distraction from the other categories.
+
+```{r lines-category-facet}
+example_data2 %>% 
+  ggplot(aes(year, n)) + 
+  geom_line() + 
+  facet_grid(category ~ .)
+```
+
+### Facet wrap by year, bars
+This clearly shows categories per year, but we want changes in each category over time.
+```{r bars-year-facet}
+example_data2 %>%
+  ggplot(aes(category, n)) +
+  geom_col(fill = "#91BFDB") + 
+  facet_wrap(~year) + 
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+### Facet wrap by category, lines
+Success! "Years within categories" was correct after all - we just needed to facet and use lines.
+
+```{r lines-year-facet}
+example_data2 %>%
+  ggplot(aes(year, n)) + 
+  geom_line() + 
+  facet_wrap(~category) +
+  theme(panel.spacing.x = unit(1, "lines"))
+```
