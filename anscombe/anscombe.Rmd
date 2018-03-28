@@ -1,0 +1,87 @@
+---
+title: "Exploring Anscombe's quartet using R + ggplot2"
+author: "Neil Saunders"
+date: "`r Sys.time()`"
+output:
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+
+library(tidyverse)
+library(gridExtra)
+
+theme_set(theme_bw())
+
+data("anscombe")
+```
+
+# Introduction
+[Anscombe's quartet](https://en.wikipedia.org/wiki/Anscombe's_quartet) is a set of four small datasets, constructed to show the importance of visualising data and the dangers of reliance on simple summary statistics.
+
+# The data
+As it is a "classic" dataset, the quartet is included in the R `datasets` package. You can type `?anscombe` for the details, which include example code for analysis and plotting.
+
+First, load required libraries and data.
+
+The `summary` function illustrates some of the identical and near-identical properties of the data. It's also easy to confirm the values for variance, correlation coefficient and linear regression given in the Wikipedia article.
+
+```{r summary}
+summary(anscombe)
+
+# correlation
+sapply(1:4, function(x) cor(anscombe[, x], anscombe[, x+4]))
+
+# variance
+sapply(5:8, function(x) var(anscombe[, x]))
+
+# linear regression (first pair only)
+lm(y1 ~ x1, data = anscombe)
+```
+
+# Plotting the data
+Using `ggplot2` and `gridExtra` to create plots similar to those in the Wikipedia article.
+
+```{r plots, fig.width=9, fig.height=7}
+p1 <- anscombe %>%
+  ggplot(aes(x1, y1)) + 
+    geom_point(color = "darkorange", size = 3) + 
+    scale_x_continuous(breaks = seq(0, 20, 2)) + 
+    scale_y_continuous(breaks = seq(0, 12, 2)) + 
+    geom_abline(intercept = 3, slope = 0.5, color = "cornflowerblue") + 
+    expand_limits(x = 0, y = 0) + 
+    labs(title = "dataset 1")
+
+p2 <- anscombe %>%
+  ggplot(aes(x2, y2)) + 
+    geom_point(color = "darkorange", size = 3) + 
+    scale_x_continuous(breaks = seq(0, 20, 2)) + 
+    scale_y_continuous(breaks = seq(0, 12, 2)) + 
+    geom_abline(intercept = 3, slope = 0.5, color = "cornflowerblue") + 
+    expand_limits(x = 0, y = 0) + 
+    labs(title = "dataset 2")
+
+p3 <- anscombe %>%
+  ggplot(aes(x3, y3)) + 
+    geom_point(color = "darkorange", size = 3) + 
+    scale_x_continuous(breaks = seq(0, 20, 2)) + 
+    scale_y_continuous(breaks = seq(0, 12, 2)) + 
+    geom_abline(intercept = 3, slope = 0.5, color = "cornflowerblue") + 
+    expand_limits(x = 0, y = 0) + 
+    labs(title = "dataset 3")
+
+p4 <- anscombe %>%
+  ggplot(aes(x4, y4)) + 
+    geom_point(color = "darkorange", size = 3) + 
+    scale_x_continuous(breaks = seq(0, 20, 2)) + 
+    scale_y_continuous(breaks = seq(0, 12, 2)) + 
+    geom_abline(intercept = 3, slope = 0.5, color = "cornflowerblue") + 
+    expand_limits(x = 0, y = 0) + 
+    labs(title = "dataset 4")
+
+grid.arrange(p1, p2, p3, p4, top = "Anscombe's Quartet")
+```
